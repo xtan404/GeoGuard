@@ -71,7 +71,6 @@ const UserLayout = ({ children }: Props) => {
       )}
     >
       {children}
-      <UpgradeToProButton />
     </VerticalLayout>
   )
 }
