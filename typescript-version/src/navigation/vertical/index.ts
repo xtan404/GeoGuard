@@ -13,27 +13,27 @@ const navigation = (): VerticalNavItemsType => {
     {
       title: 'Dashboard',
       icon: ViewDashboardOutline,
-      path: '/admin/orders'
+      path: '/admin/dashboard'
     },
     {
       title: 'Alert Management',
       icon: AlertOutline,
-      path: '/admin/geo/alerts'
+      path: '/admin/alerts'
     },
     {
       title: 'Reports',
       icon: FileOutline,
-      path: '/admin/geo/reports'
+      path: '/admin/reports'
     },
     {
       title: 'Help and Support',
       icon: FaceAgent,
-      path: '/admin/geo/support'
+      path: '/admin/support'
     },
     {
       title: 'Logout',
       icon: Logout,
-      path: '/admin/services'
+      path: '/'
     },
   ]
 }
