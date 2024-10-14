@@ -1,92 +1,71 @@
-// ** React Imports
-import { useState, Fragment, ChangeEvent, MouseEvent, ReactNode } from 'react'
+import { useState, Fragment, ReactNode } from 'react';
+import Link from 'next/link';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import InputLabel from '@mui/material/InputLabel';
+import IconButton from '@mui/material/IconButton';
+import CardContent from '@mui/material/CardContent';
+import FormControl from '@mui/material/FormControl';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import { styled, useTheme } from '@mui/material/styles';
+import MuiCard, { CardProps } from '@mui/material/Card';
+import InputAdornment from '@mui/material/InputAdornment';
+import MuiFormControlLabel from '@mui/material/FormControlLabel';
+import { useRouter } from 'next/router'; 
+import Axios from 'axios';
+import { AxiosError } from 'axios';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
 
-// ** Next Imports
-import Link from 'next/link'
+import EyeOutline from 'mdi-material-ui/EyeOutline';
+import EyeOffOutline from 'mdi-material-ui/EyeOffOutline';
 
-// ** MUI Components
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
-import Checkbox from '@mui/material/Checkbox'
-import TextField from '@mui/material/TextField'
-import Typography from '@mui/material/Typography'
-import InputLabel from '@mui/material/InputLabel'
-import IconButton from '@mui/material/IconButton'
-import CardContent from '@mui/material/CardContent'
-import FormControl from '@mui/material/FormControl'
-import OutlinedInput from '@mui/material/OutlinedInput'
-import { styled, useTheme } from '@mui/material/styles'
-import MuiCard, { CardProps } from '@mui/material/Card'
-import InputAdornment from '@mui/material/InputAdornment'
-import MuiFormControlLabel, { FormControlLabelProps } from '@mui/material/FormControlLabel'
+import themeConfig from 'src/configs/themeConfig';
 
-// ** Icons Imports
-import Google from 'mdi-material-ui/Google'
-import Github from 'mdi-material-ui/Github'
-import Twitter from 'mdi-material-ui/Twitter'
-import Facebook from 'mdi-material-ui/Facebook'
-import EyeOutline from 'mdi-material-ui/EyeOutline'
-import EyeOffOutline from 'mdi-material-ui/EyeOffOutline'
+import BlankLayout from 'src/@core/layouts/BlankLayout';
 
-// ** Configs
-import themeConfig from 'src/configs/themeConfig'
+import FooterIllustrationsV1 from 'src/views/pages/auth/FooterIllustration';
 
-// ** Layout Import
-import BlankLayout from 'src/@core/layouts/BlankLayout'
-
-// ** Demo Imports
-import FooterIllustrationsV1 from 'src/views/pages/auth/FooterIllustration'
-
-interface State {
-  password: string
-  showPassword: boolean
+interface ErrorResponse {
+  message: string; 
 }
 
-// ** Styled Components
 const Card = styled(MuiCard)<CardProps>(({ theme }) => ({
   [theme.breakpoints.up('sm')]: { width: '28rem' }
-}))
+}));
 
 const LinkStyled = styled('a')(({ theme }) => ({
   fontSize: '0.875rem',
   textDecoration: 'none',
   color: theme.palette.primary.main
-}))
-
-const FormControlLabel = styled(MuiFormControlLabel)<FormControlLabelProps>(({ theme }) => ({
-  marginTop: theme.spacing(1.5),
-  marginBottom: theme.spacing(4),
-  '& .MuiFormControlLabel-label': {
-    fontSize: '0.875rem',
-    color: theme.palette.text.secondary
-  }
-}))
+}));
 
 const RegisterPage = () => {
-  // ** States
-  const [values, setValues] = useState<State>({
-    password: '',
-    showPassword: false
-  })
+  const theme = useTheme();
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ** Hook
-  const theme = useTheme()
+  const validationSchema = Yup.object().shape({
+    firstName: Yup.string().required('First Name is required'),
+    lastName: Yup.string().required('Last Name is required'),
+    email: Yup.string().email('Invalid email').required('Email is required'),
+    password: Yup.string().required('Password is required'),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref('password')], 'Passwords must match')
+      .required('Confirm Password is required'),
+    agreedToTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
+  });
 
-  const handleChange = (prop: keyof State) => (event: ChangeEvent<HTMLInputElement>) => {
-    setValues({ ...values, [prop]: event.target.value })
-  }
-  const handleClickShowPassword = () => {
-    setValues({ ...values, showPassword: !values.showPassword })
-  }
-  const handleMouseDownPassword = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault()
-  }
+  const router = useRouter(); 
 
   return (
     <Box className='content-center'>
       <Card sx={{ zIndex: 1 }}>
-        <CardContent sx={{ padding: theme => `${theme.spacing(12, 9, 7)} !important` }}>
+        <CardContent sx={{ padding: (theme) => `${theme.spacing(12, 9, 7)} !important` }}>
           <Box sx={{ mb: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src='/images/logos/GeoGuardMainLogo.png' alt="Logo" style={{ paddingTop: 5, paddingLeft: 12, height: '100px' }} />
           </Box>
@@ -96,65 +75,198 @@ const RegisterPage = () => {
             </Typography>
             <Typography variant='body2'>Sign up here to create your account</Typography>
           </Box>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()}>
-            <TextField autoFocus fullWidth id='username' label='Username' sx={{ marginBottom: 4 }} />
-            <TextField fullWidth type='email' label='Email' sx={{ marginBottom: 4 }} />
-            <FormControl fullWidth>
-              <InputLabel htmlFor='auth-register-password'>Password</InputLabel>
-              <OutlinedInput
-                label='Password'
-                value={values.password}
-                id='auth-register-password'
-                onChange={handleChange('password')}
-                type={values.showPassword ? 'text' : 'password'}
-                endAdornment={
-                  <InputAdornment position='end'>
-                    <IconButton
-                      edge='end'
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      aria-label='toggle password visibility'
-                    >
-                      {values.showPassword ? <EyeOutline fontSize='small' /> : <EyeOffOutline fontSize='small' />}
-                    </IconButton>
-                  </InputAdornment>
+          <Formik
+            initialValues={{
+              firstName: '',
+              lastName: '',
+              email: '',
+              password: '',
+              confirmPassword: '',
+              agreedToTerms: false,
+            }}
+            validationSchema={validationSchema}
+            onSubmit={async (values, { setSubmitting, setFieldError }) => {
+              try {
+                const response = await Axios.post('http://localhost:8081/register', {
+                  firstName: values.firstName,
+                  lastName: values.lastName,
+                  email: values.email,
+                  password: values.password,
+                });
+                console.log(response.data);
+                router.push('/');
+              } catch (error: unknown) {
+                const axiosError = error as AxiosError<ErrorResponse>;
+                if (axiosError.response) {
+                  if (axiosError.response.status === 400) {
+                    const errorMessage = axiosError.response.data?.message || 'Email already exists';
+                    setFieldError('email', errorMessage);
+                  } else {
+                    console.error('Registration failed:', axiosError.response.data);
+                  }
+                } else {
+                  console.error('An unexpected error occurred:', error);
                 }
-              />
-            </FormControl>
-            <FormControlLabel
-              control={<Checkbox />}
-              label={
-                <Fragment>
-                  <span>I agree to </span>
-                  <Link href='/' passHref>
-                    <LinkStyled onClick={(e: MouseEvent<HTMLElement>) => e.preventDefault()}>
-                      privacy policy & terms
-                    </LinkStyled>
-                  </Link>
-                </Fragment>
+              } finally {
+                setSubmitting(false);
               }
-            />
-            <Button fullWidth size='large' type='submit' variant='contained' sx={{ marginBottom: 7 }}>
-              Sign up
-            </Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <Typography variant='body2' sx={{ marginRight: 2 }}>
-                Already have an account?
-              </Typography>
-              <Typography variant='body2'>
-                <Link passHref href='/'>
-                  <LinkStyled>Sign in instead</LinkStyled>
-                </Link>
-              </Typography>
-            </Box>
-          </form>
+            }}           
+            
+          >
+            {({ values, handleChange, handleBlur, setFieldValue, isSubmitting }) => (
+             <Form noValidate autoComplete='off'>
+               <ErrorMessage name='firstName'>
+                 {(msg) => <div style={{ color: 'red' }}>{msg}</div>}
+               </ErrorMessage>
+               <Field
+                 as={TextField}
+                 fullWidth
+                 label='First Name'
+                 sx={{ marginBottom: 4 }}
+                 name='firstName'
+                 onChange={handleChange}
+                 onBlur={handleBlur}
+               />
+
+               <ErrorMessage name='lastName'>
+                 {(msg) => <div style={{ color: 'red' }}>{msg}</div>}
+               </ErrorMessage>
+               <Field
+                 as={TextField}
+                 fullWidth
+                 label='Last Name'
+                 sx={{ marginBottom: 4 }}
+                 name='lastName'
+                 onChange={handleChange}
+                 onBlur={handleBlur}
+               />
+
+               <ErrorMessage name='email'>
+                 {(msg) => <div style={{ color: 'red' }}>{msg}</div>}
+               </ErrorMessage>
+               <Field
+                 as={TextField}
+                 fullWidth
+                 type='email'
+                 label='Email'
+                 sx={{ marginBottom: 4 }}
+                 name='email'
+                 onChange={handleChange}
+                 onBlur={handleBlur}
+               />
+
+               <ErrorMessage name='password'>
+                 {(msg) => <div style={{ color: 'red' }}>{msg}</div>}
+               </ErrorMessage>
+               <FormControl fullWidth>
+                 <InputLabel htmlFor='auth-register-password'>Password</InputLabel>
+                 <OutlinedInput
+                   label='Password'
+                   sx={{ marginBottom: 4 }}
+                   name='password'
+                   value={values.password} 
+                   onChange={handleChange}
+                   onBlur={handleBlur}
+                   type={showPassword ? 'text' : 'password'} 
+                   endAdornment={
+                     <InputAdornment position='end'>
+                       <IconButton
+                         edge='end'
+                         onClick={() => setShowPassword(!showPassword)}
+                         onMouseDown={(event) => event.preventDefault()}
+                         aria-label='toggle password visibility'
+                       >
+                         {showPassword ? <EyeOutline fontSize='small' /> : <EyeOffOutline fontSize='small' />}
+                       </IconButton>
+                     </InputAdornment>
+                   }
+                 />
+               </FormControl>
+              
+               <ErrorMessage name='confirmPassword'>
+                 {(msg) => <div style={{ color: 'red' }}>{msg}</div>}
+               </ErrorMessage>
+               <FormControl fullWidth>
+                 <InputLabel htmlFor='auth-register-confirm-password'>Confirm Password</InputLabel>
+                 <OutlinedInput
+                   label='Confirm Password'
+                   sx={{ marginBottom: 4 }}
+                   name='confirmPassword'
+                   value={values.confirmPassword} 
+                   onChange={handleChange}
+                   onBlur={handleBlur}
+                   type={showConfirmPassword ? 'text' : 'password'} 
+                   endAdornment={
+                     <InputAdornment position='end'>
+                       <IconButton
+                         edge='end'
+                         onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                         onMouseDown={(event) => event.preventDefault()}
+                         aria-label='toggle confirm password visibility'
+                       >
+                         {showConfirmPassword ? <EyeOutline fontSize='small' /> : <EyeOffOutline fontSize='small' />}
+                       </IconButton>
+                     </InputAdornment>
+                   }
+                 />
+               </FormControl>
+               
+               <MuiFormControlLabel
+                 control={
+                   <Checkbox
+                     name='agreedToTerms'
+                     checked={values.agreedToTerms}
+                     onChange={() => setFieldValue('agreedToTerms', !values.agreedToTerms)}
+                   />
+                 }
+                 label={
+                   <Fragment>
+                     <span>I agree to </span>
+                     <Link href='/' passHref>
+                       <LinkStyled
+                         onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault()}
+                       >
+                         privacy policy & terms
+                       </LinkStyled>
+                     </Link>
+                   </Fragment>
+                 }
+               />
+               <ErrorMessage name='agreedToTerms'>
+                 {(msg) => <div style={{ color: 'red' }}>{msg}</div>}
+               </ErrorMessage>
+               
+               <Button 
+                 fullWidth 
+                 size='large' 
+                 type='submit' 
+                 variant='contained' 
+                 sx={{ marginBottom: 7 }} 
+                 disabled={isSubmitting}
+               >
+                 Sign up
+               </Button>
+               
+               <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
+                 <Typography variant='body2' sx={{ marginRight: 2 }}>
+                   Already have an account?
+                 </Typography>
+                 <Typography variant='body2'>
+                   <Link passHref href='/' >
+                     <LinkStyled>Sign in instead</LinkStyled>
+                   </Link>
+                 </Typography>
+               </Box>
+             </Form>
+            )}
+          </Formik>
         </CardContent>
       </Card>
       <FooterIllustrationsV1 />
     </Box>
-  )
-}
+  );
+};
 
-RegisterPage.getLayout = (page: ReactNode) => <BlankLayout>{page}</BlankLayout>
+RegisterPage.getLayout = (page: ReactNode) => <BlankLayout>{page}</BlankLayout>;
 
-export default RegisterPage
+export default RegisterPage;

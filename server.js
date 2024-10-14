@@ -16,7 +16,7 @@ const db = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",
-    database: "",
+    database: "geoguard",
 })
 
 app.get('/', (request, response) => {
@@ -24,5 +24,31 @@ app.get('/', (request, response) => {
 })
 
 app.listen(8081, () => {
-    console.log("Listening")
+    console.log("GeoGuard Launching...")
 })
+
+app.post('/register', (request, response) => {
+    const { firstName, lastName, email, password } = request.body;
+
+    // Check if the email already exists
+    const checkEmailSql = 'SELECT * FROM users WHERE email = ?';
+    db.query(checkEmailSql, [email], (checkError, checkResult) => {
+        if (checkError) {
+            return response.status(500).send('Database error');
+        }
+        
+        if (checkResult.length > 0) {
+            // If email exists, send a 400 response with a specific error message
+            return response.status(400).send('Email already exists');
+        }
+
+        const sql = 'INSERT INTO users (firstName, lastName, email, password) VALUES (?, ?, ?, ?)';
+        db.query(sql, [firstName, lastName, email, password], (error, result) => {
+            if (error) throw error;
+            response.send('Registration Successful');
+        });
+    });
+});
+
+
+
