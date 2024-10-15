@@ -23,10 +23,15 @@ import * as Yup from 'yup';
 import EyeOutline from 'mdi-material-ui/EyeOutline';
 import EyeOffOutline from 'mdi-material-ui/EyeOffOutline';
 
+// Modal components for Privacy Policy and Terms
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+
 import themeConfig from 'src/configs/themeConfig';
 
 import BlankLayout from 'src/@core/layouts/BlankLayout';
-
 import FooterIllustrationsV1 from 'src/views/pages/auth/FooterIllustration';
 
 interface ErrorResponse {
@@ -45,9 +50,11 @@ const LinkStyled = styled('a')(({ theme }) => ({
 
 const RegisterPage = () => {
   const theme = useTheme();
+  const router = useRouter(); 
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false); // State for modal visibility
 
   const validationSchema = Yup.object().shape({
     firstName: Yup.string().required('First Name is required'),
@@ -60,7 +67,13 @@ const RegisterPage = () => {
     agreedToTerms: Yup.boolean().oneOf([true], 'You must accept the terms and conditions'),
   });
 
-  const router = useRouter(); 
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   return (
     <Box className='content-center'>
@@ -224,7 +237,10 @@ const RegisterPage = () => {
                      <span>I agree to </span>
                      <Link href='/' passHref>
                        <LinkStyled
-                         onClick={(e: React.MouseEvent<HTMLAnchorElement>) => e.preventDefault()}
+                         onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                           e.preventDefault();
+                           handleOpenDialog();
+                         }}
                        >
                          privacy policy & terms
                        </LinkStyled>
@@ -263,6 +279,96 @@ const RegisterPage = () => {
         </CardContent>
       </Card>
       <FooterIllustrationsV1 />
+
+      {/* Privacy Policy & Terms Modal */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="md">
+  <DialogTitle>Privacy Policy & Terms</DialogTitle>
+  <DialogContent dividers>
+    <Typography variant="body1" gutterBottom>
+      <strong>Privacy Policy</strong> <br />
+     {/* <strong>Effective Date:</strong> [Insert Date] <br /><br /> */}
+
+      At GeoGuard, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our website and services, including the Dashboard, Alert Management, Reports, and Help and Support features. <br />
+    </Typography>
+
+    <Typography variant="body2" gutterBottom>
+      <br />
+      <strong>1. Information We Collect</strong> <br />
+      <strong>Personal Information:</strong> We may collect your name, and email address data when you register or use our services.<br />
+      <strong>Usage Data:</strong> We automatically collect data about how you interact with our website, including pages visited, features used, and any information submitted through forms or alerts.<br />
+      <strong>Device Information:</strong> We may collect technical information about your device, such as IP address, browser type, and operating system, to enhance your experience.<br /><br />
+
+      <strong>2. How We Use Your Information</strong> <br />
+      To Provide Services: We use your data to operate the Dashboard, manage alerts, generate reports, and offer support.<br />
+      Notifications: Your contact information may be used to send SMS or email notifications about flood alerts and system updates.<br />
+      Analytics: We may analyze how you use our website to improve performance, features, and overall service quality.<br /><br />
+
+      <strong>3. Data Security</strong> <br />
+      We prioritize data security and employ various technical and organizational measures to protect your data from unauthorized access or disclosure. However, no method of transmission over the Internet is completely secure.<br /><br />
+
+      <strong>4. Sharing of Information</strong> <br />
+      We do not share your personal information with third parties, except as necessary to comply with legal obligations or to protect the rights and safety of our users.<br />
+      We may share anonymized data for analytics and reporting purposes to improve flood monitoring and response.<br /><br />
+
+      <strong>5. Your Choices</strong> <br />
+      You may access, update, or delete your personal information at any time through your account settings. You can also opt-out of receiving non-essential communications by contacting us.<br /><br />
+
+      <strong>6. Third-Party Links</strong> <br />
+      Our website may contain links to third-party websites. We are not responsible for the privacy practices of other sites.<br /><br />
+
+      <strong>7. Changes to This Privacy Policy</strong> <br />
+      We may update this Privacy Policy from time to time. Any changes will be posted on this page with the updated date.<br /><br />
+
+      <strong>Contact Us:</strong> If you have any questions about this Privacy Policy, please contact us at r.rendon.528550@umindanao.edu.ph.<br /><br />
+    </Typography>
+
+    <Typography variant="body1" gutterBottom>
+      <strong>Terms of Service</strong> <br />
+     {/*} <strong>Effective Date:</strong> [Insert Date] <br /><br /> */}
+
+      Welcome to GeoGuard! By using our website and services, including the Dashboard, Alert Management, Reports, and Help and Support features, you agree to the following terms and conditions. Please read them carefully. <br />
+    </Typography>
+
+    <Typography variant="body2" gutterBottom>
+      <br />
+      <strong>1. Acceptance of Terms</strong> <br />
+      By accessing or using GeoGuard, you agree to be bound by these Terms of Service. If you do not agree with these terms, you must not use our website or services.<br /><br />
+
+      <strong>2. Use of Services</strong> <br />
+      Account Registration: You may be required to create an account to use certain features. You are responsible for maintaining the confidentiality of your account information.<br />
+      Permitted Use: Our website is intended for monitoring flood conditions and providing alert notifications. You agree not to misuse the platform, engage in unauthorized access, or disrupt our services.<br />
+      Prohibited Use: You agree not to use our website for illegal activities, distribute harmful materials, or violate the rights of others.<br /><br />
+
+      <strong>3. Service Availability</strong> <br />
+      We strive to maintain the functionality of GeoGuard, but we cannot guarantee uninterrupted access to the site. Maintenance, updates, or unforeseen issues may occasionally affect the availability of services.<br /><br />
+
+      <strong>4. User Responsibilities</strong> <br />
+      Accuracy of Data: You are responsible for ensuring the accuracy of the data you provide, including contact information for receiving alerts.<br />
+      Flood Alerts: GeoGuard provides alerts based on the data available. However, the accuracy of flood predictions may vary, and you should not solely rely on the system in emergency situations.<br /><br />
+
+      <strong>5. Intellectual Property</strong> <br />
+      All content, including text, graphics, logos, and software, is the property of GeoGuard or its licensors. You may not copy, distribute, or use any materials from our website without permission.<br /><br />
+
+      <strong>6. Limitation of Liability</strong> <br />
+      GeoGuard is not liable for any damages, losses, or injuries resulting from your use of the website or services, including but not limited to:<br />
+      - Delays in receiving alerts<br />
+      - Inaccurate flood data or predictions<br />
+      - Service interruptions or technical issues<br /><br />
+
+      <strong>7. Termination</strong> <br />
+      We reserve the right to suspend or terminate your access to GeoGuard at any time, without notice, for violation of these terms or for other reasons at our discretion.<br /><br />
+
+      <strong>8. Modifications to Terms</strong> <br />
+      We may update these Terms of Service from time to time. Continued use of the website after changes are made will constitute your acceptance of the new terms.<br /><br />
+
+      <strong>Contact Us:</strong> If you have any questions or concerns about these Terms of Service, please contact us at r.rendon.528550@umindanao.edu.ph.
+    </Typography>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseDialog}>Close</Button>
+  </DialogActions>
+</Dialog>
+
     </Box>
   );
 };

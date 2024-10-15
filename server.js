@@ -17,7 +17,7 @@ const db = mysql.createConnection({
     user: "root",
     password: "",
     database: "geoguard",
-})
+});
 
 app.get('/', (request, response) => {
     return response.json("Starting the NODE SERVER...")
@@ -50,5 +50,40 @@ app.post('/register', (request, response) => {
     });
 });
 
+//login
+app.post("/login", (request, response) => {
+  const { email, password, role } = request.body;
+  const sql = "SELECT user_id, firstName, role FROM users WHERE email = ? AND password = ?";
+  db.query(sql, [email, password, role], (error, data) => {
+    if (error) {
+      console.error("Error during login:", error);
+      return response.json({
+        success: false,
+        error: "An error occurred. Please try again later.",
+      });
+    }
 
+    if (data.length > 0) {
+      const { user_id, firstName, role } = data[0];
+      return response.json({ success: true, user_id, firstName, role });
+    } else {
+      return response.json({
+        success: false,
+        error: "Invalid credentials. Please try again.",
+      });
+    }
+  });
+});
 
+app.post('/login', (request, response) => {
+    const sql = "SELECT FROM users WHERE email = ? AND password = ?"
+    db.query(sql, [request.body.email, request.body.password], (error, result) => {
+        if (error) return response.json({ Message: "Error inside server" })
+        if (result.length > 0) {
+            request.session.role = result[0].role
+            return response.json({Login: true})
+        } else {
+            return response.json({Login: false})
+        }
+    })
+})
