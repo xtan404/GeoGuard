@@ -30,7 +30,6 @@ app.listen(8081, () => {
 app.post('/register', (request, response) => {
     const { firstName, lastName, email, password } = request.body;
 
-    // Check if the email already exists
     const checkEmailSql = 'SELECT * FROM users WHERE email = ?';
     db.query(checkEmailSql, [email], (checkError, checkResult) => {
         if (checkError) {
@@ -38,7 +37,6 @@ app.post('/register', (request, response) => {
         }
         
         if (checkResult.length > 0) {
-            // If email exists, send a 400 response with a specific error message
             return response.status(400).send('Email already exists');
         }
 
@@ -50,7 +48,6 @@ app.post('/register', (request, response) => {
     });
 });
 
-//login
 app.post("/login", (request, response) => {
   const { email, password, role } = request.body;
   const sql = "SELECT user_id, firstName, role FROM users WHERE email = ? AND password = ?";

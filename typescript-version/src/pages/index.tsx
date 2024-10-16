@@ -85,13 +85,13 @@ const LoginPage = () => {
       password: Yup.string().required("Password is required"),
     }),
     onSubmit: (values) => {
-      console.log('Form submitted with values:', values); // Debugging
+      console.log('Form submitted with values:', values);
       handleLogin(values);
     },
   });
 
   const handleLogin = async (values: { email: string; password: string }) => {
-    console.log('Attempting to log in with values:', values); // Debugging
+    console.log('Attempting to log in with values:', values);
     try {
       const response = await axios.post("http://localhost:8081/login", values);
       if (response.data.success) {
@@ -99,7 +99,7 @@ const LoginPage = () => {
         localStorage.setItem("loggedIn", "true");
         localStorage.setItem("firstName", response.data.firstName);
         localStorage.setItem("user_id", response.data.user_id);
-        localStorage.setItem("role", response.data.role); // Store user role in localStorage
+        localStorage.setItem("role", response.data.role); 
         axios.defaults.headers.common["Authorization"] = response.data.user_id;
 
         const Toast = Swal.mixin({
@@ -117,12 +117,7 @@ const LoginPage = () => {
           icon: "success",
           title: "Signed in",
         });
-        // Redirect based on user role
-        if (response.data.role === "admin") {
-          router.push('/admin/dashboard');
-        } else if (response.data.role === "user") {
-          router.push('/pages/home');
-        }
+        router.push('/admin/dashboard');
       } else {
         Swal.fire({
         icon: "error",
@@ -130,7 +125,6 @@ const LoginPage = () => {
         text: "Invalid account. Please try again.",
       }).then((result) => {
         if (result.isConfirmed) {
-        // This will be executed after the OK button is clicked
         formik.resetForm();
   }
 });
@@ -224,12 +218,12 @@ const LoginPage = () => {
               sx={{ mb: 4, display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}
             >
               <FormControlLabel control={<Checkbox />} label='Remember Me' />
-              <Link passHref href='/'>
+             {/*} <Link passHref href='/'>
                 <LinkStyled onClick={e => e.preventDefault()}>Forgot Password?</LinkStyled>
-              </Link>
+              </Link> */}
             </Box>
             <Button
-              type="submit" // Ensure the button is of type submit
+              type="submit" 
               fullWidth
               size='large'
               variant='contained'
