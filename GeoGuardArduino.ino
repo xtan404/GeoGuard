@@ -3,10 +3,12 @@ const int analogInPin = A0;  // Pin for Water Sensor 1 (Yellow Level)
 const int analogInPin1 = A1; // Pin for Water Sensor 2 (Orange Level)
 int sensorValue = 0;
 int sensor2Value = 0;
+const int waterSensor1Digital = 3; // Digital pin for transmitting first sensor's data
+const int waterSensor2Digital = 9; // Digital pin for transmitting second sensor's data
 
 // Ultrasonic Sensor
-#define trigPin 9
-#define echoPin 8
+#define trigPin 13
+#define echoPin 12
 
 // RGB Module
 int redPin = 7; // Ensure this pin supports PWM
@@ -28,39 +30,39 @@ float bat_percentage;
 #include <SoftwareSerial.h>
 SoftwareSerial sim(10, 11); // RX, TX pins for SIM800L
 
-// Communication with NodeMCU
-SoftwareSerial comms(12, 13); // RX, TX pins for communication with NodeMCU
-#include <ArduinoJson.h>
-// Timing for sending data
-unsigned long lastSendTime = 0;
-const long sendInterval = 60000; // 60 seconds
-
 // Uptime tracking
 unsigned long startTime = 0; // Store the system start time
 const unsigned long maintenanceInterval = 15 * 24 * 60 * 60 * 1000UL; // 15 days in milliseconds
 bool maintenanceReminderSent = false;
 
+// Timing variables for sensor health readings
+unsigned long ultrasonicFailureStart = 0;
+unsigned long waterSensorFailureStart = 0;
+const long discrepancyThreshold = 120000; // 2 minutes in milliseconds
+
 // Array of phone numbers for responders
 const char* phoneNumbers[] = {
-  "+639937583174" // Change to your phone numbers
-                  // Add more numbers as needed
+  "+639937583174", // Change to your phone numbers
+  "+639560338164"
 };
 const int numPhones = sizeof(phoneNumbers) / sizeof(phoneNumbers[0]);
 
 // Admin phone number (for maintenance alerts)
 const char* adminPhoneNumber = "+639560338164";
 
+// Alert Flags
 bool yellowAlertSent = false;
 bool orangeAlertSent = false;
 bool redAlertSent = false;
 bool batteryAlertSent20 = false;
 bool batteryAlertSent10 = false;
 bool batteryAlertSent1 = false;
+bool waterSensorFailureAlertSent = false;
+bool ultrasonicFailureAlertSent = false;
 
 void setup() {
   // Initialize serial communication
   Serial.begin(9600);
-  comms.begin(9600); // Communication with NodeMCU
 
   // Set up Ultrasonic Sensor pins
   pinMode(trigPin, OUTPUT);
@@ -70,6 +72,9 @@ void setup() {
   sim.begin(9600);
   delay(1000);
   Serial.println("System Started...");
+
+  pinMode(waterSensor1Digital, OUTPUT);
+  pinMode(waterSensor2Digital, OUTPUT);
 
   // Set the RGB pins as outputs
   pinMode(redPin, OUTPUT);
@@ -91,6 +96,10 @@ void loop() {
   // Reading Water Sensors
   sensorValue = analogRead(analogInPin); 
   sensor2Value = analogRead(analogInPin1);
+
+  // Transmit the values as PWM signals
+  analogWrite(waterSensor1Digital, map(sensorValue, 0, 1023, 0, 255));
+  analogWrite(waterSensor2Digital, map(sensor2Value, 0, 1023, 0, 255));
 
   // Print Water Sensor 1 value
   Serial.println("--------------------------------------------------------");
@@ -124,11 +133,12 @@ void loop() {
     Serial.println(" cm");
   }
 
-  // Alert logic
+  //  Flood monitoring alert logic
   bool currentYellowAlert = sensorValue > 400 && distance <= 120;
   bool currentOrangeAlert = sensorValue > 400 && sensor2Value > 400 && distance <= 70;
   bool currentRedAlert = sensorValue > 400 && sensor2Value > 400 && distance < 10 && distance > 2;
-
+  
+  // Conditional statements for Buzzer and RBG control with SMS Alerts
   // Buzzer and RBG control with SMS Alerts
   if (currentRedAlert) {
     tone(buzzerPin, 1000); // Continuous tone at 1000Hz
@@ -174,7 +184,7 @@ void loop() {
 
   // Battery Monitoring
   batteryValue = analogRead(batteryPin);
-  voltage = (((batteryValue * 5.0) / 1024) * 4.8); 
+  voltage = (((batteryValue * 5.0) / 1023) * 5); 
   bat_percentage = mapfloat(voltage, 5.3, 12.0, 0, 100); 
   
   // Clamp battery percentage within range
@@ -191,25 +201,25 @@ void loop() {
   Serial.print(bat_percentage);
   Serial.println(" %");
 
-  // Battery health alert logic
+  // Battery maintenance alert logic
   bool currentBatteryAlert20 = bat_percentage <= 20;
   bool currentBatteryAlert10 = bat_percentage <= 10;
-  bool currentBatteryAlert1 = bat_percentage <= 2;
+  bool currentBatteryAlert1 = bat_percentage <= 1;
 
-  // Alert logic for battery health
+  // Conditional statements for battery maintenance
   if (currentBatteryAlert1) {
     if (!batteryAlertSent1) {
-      SendMessageToAdmin("Critical Maintenance Alert: Battery is nearly empty. The system may not function properly. Please recharge immediately.");
+      SendMessageToAdmin(String(bat_percentage) + "% Battery is nearly empty. This is the last notification and the system may not function properly.");
       batteryAlertSent1 = true;
     }
   } else if (currentBatteryAlert10) {
     if (!batteryAlertSent10) {
-      SendMessageToAdmin("Maintenance Alert: Battery health is critical. Current level: " + String(bat_percentage) + "%. Please recharge the battery immediately.");
+      SendMessageToAdmin(String(bat_percentage) + "% Battery. Please recharge the battery immediately.");
       batteryAlertSent10 = true;
     }
   } else if (currentBatteryAlert20) {
     if (!batteryAlertSent20) {
-      SendMessageToAdmin("Warning: Battery health is low. Current level: " + String(bat_percentage) + "%. Please consider recharging soon.");
+      SendMessageToAdmin(String(bat_percentage) + "% Battery. Please consider recharging soon.");
       batteryAlertSent20 = true;
     }
   }
@@ -226,14 +236,19 @@ void loop() {
   }
 
   // Check for maintenance reminder
-  unsigned long currentMillis = millis();
-  if ((currentMillis - startTime >= maintenanceInterval) && !maintenanceReminderSent) {
-    SendMessageToAdmin("Regular Maintenance Reminder: The system has been running for 15 days. Please perform the necessary maintenance checks.");
-    maintenanceReminderSent = true; // Ensure the reminder is sent only once
-    // Reset the start time and maintenance reminder to loop for another 15 days countdown
-    startTime = millis(); // Reset the start time
-    maintenanceReminderSent = false; // Reset the maintenance reminder
-  }
+  checkMaintenanceReminder(startTime, maintenanceInterval, maintenanceReminderSent, 
+                          "Regular Maintenance Reminder: The system has been running for 15 days. Please perform the necessary maintenance checks.");
+  
+  // Sensor health check logic
+  bool currentUltrasonicFailure = sensorValue < 400 && sensor2Value < 400 && distance <= 120;
+  bool currentWaterSensorFailure = sensorValue > 400 && distance > 120;
+
+  // Check sensor maintenance function
+  checkSensorFailure(currentUltrasonicFailure, ultrasonicFailureStart, ultrasonicFailureAlertSent, 
+                     "Sensor Failure: Geoguard detects something in range, but water sensors are not responding. Please check sensor functionality.");
+
+  checkSensorFailure(currentWaterSensorFailure, waterSensorFailureStart, waterSensorFailureAlertSent, 
+                     "Sensor Failure: Geoguard detects something in range, but water sensors are not responding. Please check sensor functionality.");
 
   // Delay before next reading
   delay(3300);
@@ -278,6 +293,36 @@ String _readSerial() {
   }
   return "";
 }
+
+void checkMaintenanceReminder(unsigned long &startTime, const unsigned long interval, bool &reminderSent, const char* message) {
+  unsigned long currentMillis = millis();
+  if ((currentMillis - startTime >= interval) && !reminderSent) {
+    SendMessageToAdmin(message);
+    reminderSent = true;             // Ensure the reminder is sent only once
+    startTime = millis();             // Reset the start time
+    reminderSent = false;             // Reset the reminder for future reminders
+  }
+}
+
+// Function to handle sensor failure check and alert
+void checkSensorFailure(bool currentFailure, unsigned long &failureStart, bool &alertSent, const char* failureMessage) {
+  if (currentFailure) {
+    if (failureStart == 0) {
+      failureStart = millis();  // Start timer for failure
+      Serial.println("SENSOR FAILURE COUNTDOWN");
+    } else if (millis() - failureStart >= discrepancyThreshold) {
+      if (!alertSent) {
+        SendMessageToAdmin(failureMessage);
+        alertSent = true;
+      }
+    }
+  } else if (failureStart > 0) {
+    failureStart = 0; // Reset timer
+    alertSent = false; // Reset alert flag
+    Serial.println("COUNTDOWN RESET");
+  }
+}
+
 void setColor(int red, int green, int blue) {
   analogWrite(redPin, red);
   analogWrite(greenPin, green);
@@ -288,14 +333,5 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-void sendToNodeMCU(int water1, int water2, float distance, float voltage, float bat_percentage) {
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-  root["batteryHealth"] = bat_percentage;
-  root["waterSensor1"] = water1;
-  root["waterSensor2"] = water2;
-  root["waterDistance"] = distance;
-  root["voltage"] = voltage;
-  root.printTo(comms);
-}
+
 
