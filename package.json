@@ -1,5 +1,6 @@
 {
   "name": "geoguard",
+  "homepage": "http://geoguard.tech/",
   "version": "1.0.0",
   "description": "Capstone Project 2024",
   "main": "index.js",

@@ -1,10 +1,9 @@
-import { ChangeEvent, MouseEvent, ReactNode, useEffect, useState } from 'react';
+import { MouseEvent, ReactNode, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
@@ -13,15 +12,11 @@ import IconButton from '@mui/material/IconButton';
 import CardContent from '@mui/material/CardContent';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import MuiCard, { CardProps } from '@mui/material/Card';
 import InputAdornment from '@mui/material/InputAdornment';
 import MuiFormControlLabel, { FormControlLabelProps } from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
-import Google from 'mdi-material-ui/Google';
-import Github from 'mdi-material-ui/Github';
-import Twitter from 'mdi-material-ui/Twitter';
-import Facebook from 'mdi-material-ui/Facebook';
 import EyeOutline from 'mdi-material-ui/EyeOutline';
 import EyeOffOutline from 'mdi-material-ui/EyeOffOutline';
 import themeConfig from 'src/configs/themeConfig';
@@ -56,7 +51,6 @@ const FormControlLabel = styled(MuiFormControlLabel)<FormControlLabelProps>(({ t
 
 const LoginPage = () => {
   const { user_id } = useParams<{ user_id: string }>();
-  const [error, setError] = useState("");
   const [user, setUser] = useState({
     firstName: "",
     email: "",
@@ -131,7 +125,6 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Error during login:", error);
-      setError("An error occurred. Please try again later.");
     }
   };
 
@@ -139,14 +132,8 @@ const LoginPage = () => {
     password: '',
     showPassword: false
   });
-
-  const theme = useTheme();
   const router = useRouter();
-
-  const handleChange = (prop: keyof State) => (event: ChangeEvent<HTMLInputElement>) => {
-    setValues({ ...values, [prop]: event.target.value });
-  };
-
+  
   const handleClickShowPassword = () => {
     setValues({ ...values, showPassword: !values.showPassword });
   };

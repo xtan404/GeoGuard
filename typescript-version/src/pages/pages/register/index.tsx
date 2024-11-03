@@ -10,7 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import CardContent from '@mui/material/CardContent';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import MuiCard, { CardProps } from '@mui/material/Card';
 import InputAdornment from '@mui/material/InputAdornment';
 import MuiFormControlLabel from '@mui/material/FormControlLabel';
@@ -27,8 +27,6 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-
-import themeConfig from 'src/configs/themeConfig';
 
 import BlankLayout from 'src/@core/layouts/BlankLayout';
 import FooterIllustrationsV1 from 'src/views/pages/auth/FooterIllustration';
@@ -48,7 +46,6 @@ const LinkStyled = styled('a')(({ theme }) => ({
 }));
 
 const RegisterPage = () => {
-  const theme = useTheme();
   const router = useRouter(); 
   
   const [showPassword, setShowPassword] = useState(false);
